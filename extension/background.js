@@ -67,9 +67,8 @@ async function attemptReLogin() {
 }
 
 async function fetchWithAuthRetry(url, options, isRetry = false) {
-  if (typeof browser === 'undefined') { // Guard: Ensure browser is defined before fetch
+  if (typeof browser === 'undefined') { 
       console.error("fetchWithAuthRetry: 'browser' object not available. Cannot proceed.");
-      // Simulate a network error or a specific error response
       return new Response(JSON.stringify({ error: "Extension context lost" }), { status: 500, statusText: "Extension context lost" });
   }
   let response = await fetch(url, options);
@@ -122,8 +121,7 @@ if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.onMessa
   console.error("Background.js: browser.runtime.onMessage not available. Magnet/logout messages won't be handled.");
 }
 
-// --- .torrent File Download Handling (Temporarily Commented Out for Debugging) ---
-/*
+// --- .torrent File Download Handling ---
 if (typeof browser !== 'undefined' && browser.downloads && browser.downloads.onChanged) {
   browser.downloads.onChanged.addListener(async (downloadDelta) => {
     if (downloadDelta.state && downloadDelta.state.current === 'complete') {
@@ -159,7 +157,7 @@ if (typeof browser !== 'undefined' && browser.downloads && browser.downloads.onC
           await showSystemNotification('.torrent Uploaded', `${filenameForNotification} successfully uploaded.`);
           if (prefs.removeTorrentAfterUpload) {
             try { await browser.downloads.removeFile(downloadDelta.id); } 
-            catch (removeError) { await showSystemNotification('File Removal Error', `${filenameForNotification}: Could not be removed.`, false); }
+            catch (removeError) { /* console.error('Background: Failed to remove .torrent file:', removeError); */ await showSystemNotification('File Removal Error', `${filenameForNotification}: Could not be removed.`, false); }
           }
         }
       } catch (error) {
@@ -173,6 +171,5 @@ if (typeof browser !== 'undefined' && browser.downloads && browser.downloads.onC
 } else {
   console.error("Background.js: browser.downloads.onChanged not available. Torrent file downloads won't be handled.");
 }
-*/
 
-console.log("Service Worker: background.js script successfully loaded and top-level listeners (potentially) attached.");
+console.log("Service Worker: background.js script successfully loaded and top-level listeners attached.");
