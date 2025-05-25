@@ -30,23 +30,89 @@ torrent-bot/
 └── ... (other git files, conftest.py)
 ```
 
-## Building the Docker Image
+## Docker Image Information
 
-To build the Docker image for the server:
+The application's Docker image is hosted on GitHub Container Registry (GHCR).
 
-1.  Navigate to the root directory of the project (`torrent-bot/`).
-2.  Run the build command:
+*   **Image location:** `ghcr.io/mikkerlo/torrent-browser-ext:master`
 
+This image is typically updated automatically by the GitHub Actions workflow in this repository whenever changes are pushed to the `master` branch.
+
+## Running the Server
+
+You can run the server using Docker. The recommended method is with Docker Compose, which uses the pre-built image from GHCR.
+
+### Option 1: Running with Docker Compose (Recommended - Uses Pre-built Image)
+
+The `docker-compose.yml` file in the project root is configured to use the pre-built image `ghcr.io/mikkerlo/torrent-browser-ext:master`.
+
+1.  **Configure Environment Variables:**
+    You still need to provide runtime environment variables for secrets and specific configurations.
+    The `docker-compose.yml` file is set up to facilitate this. You have two main options:
+
+    *   **A: Edit `docker-compose.yml` directly:**
+        You can uncomment and set the variables directly in the `environment` section of the `server` service in `docker-compose.yml`.
+        ```yaml
+        # c:\Users\mikkerlo\Documents\torrent-bot\docker-compose.yml
+        services:
+          server:
+            image: ghcr.io/mikkerlo/torrent-browser-ext:master
+            ports:
+              - "5000:5000"
+            environment:
+              FLASK_SECRET_KEY: "your_very_strong_and_unique_secret_key"
+              QB_USER: "your_qb_username"
+              QB_PASS: "your_qb_password"
+              APP_USERS: "user1:pass1,user2:pass2"
+              QB_URL: "http://localhost:8080/" # Or your qBittorrent instance URL
+              CORS_ORIGINS: "*"
+              FLASK_APP: "app:create_app"
+              FLASK_RUN_HOST: "0.0.0.0"
+              FLASK_RUN_PORT: "5000"
+            # ...
+        ```
+
+    *   **B: Use a `.env` file (More Secure for Secrets):**
+        Create a file named `.env` in the `server` directory (`c:\Users\mikkerlo\Documents\torrent-bot\server\.env`).
+        **Add `server/.env` to your `.gitignore` file to prevent committing secrets.**
+
+        Example `server/.env` file content:
+        ```env
+        FLASK_SECRET_KEY='your_very_strong_and_unique_secret_key_for_compose'
+        APP_USERS='user1:somepass,commonuser:anotherpass'
+        QB_URL='http://localhost:8080' # Replace with your qBittorrent URL
+        QB_USER='qb_admin'
+        QB_PASS='qb_admin_password'
+        # CORS_ORIGINS='http://localhost:3000,chrome-extension://your_extension_id' # Optional, defaults to *
+        ```
+        Then, ensure the `env_file` section is active (uncommented) in your `docker-compose.yml`:
+        ```yaml
+        # c:\Users\mikkerlo\Documents\torrent-bot\docker-compose.yml
+        services:
+          server:
+            image: ghcr.io/mikkerlo/torrent-browser-ext:master
+            # ...
+            # To use an environment file, uncomment the line below if it isn't already
+            env_file:
+              - ./server/.env
+            # ...
+        ```
+
+2.  **Run Docker Compose:**
+    Navigate to the project root (`c:\Users\mikkerlo\Documents\torrent-bot\`) and run:
     ```shell
-    docker build -t torrent-server-bot -f server/Dockerfile .
+    docker-compose up -d
     ```
-    *   `-t torrent-server-bot`: Tags the image with the name `torrent-server-bot`. You can choose any name.
-    *   `-f server/Dockerfile`: Specifies the path to the Dockerfile within the `server` directory.
-    *   `.`: Sets the build context to the current directory (the project root).
+    This will pull the `ghcr.io/mikkerlo/torrent-browser-ext:master` image (if not already present locally) and start the `server` service with your configured environment variables.
 
-## Running the Docker Container (Standalone)
+3.  **To stop the service:**
+    ```shell
+    docker-compose down
+    ```
 
-Once the image is built, you can run it as a standalone container. You will need to pass sensitive information as environment variables.
+### Option 2: Running the Docker Container Standalone (Using Pre-built Image)
+
+If you prefer not to use Docker Compose, you can run the pre-built image directly:
 
 ```shell
 docker run -d \
@@ -57,20 +123,32 @@ docker run -d \
     -e APP_USERS="user1:yoursecurepassword1,user2:anotherpassword2" \
     -e QB_URL="http://your_qbittorrent_host:port" \
     -e CORS_ORIGINS="http://localhost:3000,chrome-extension://your_extension_id_here" \
-    # Non-sensitive environment variables are set in the Dockerfile or have defaults
     --name my-torrent-server \
-    torrent-server-bot
+    ghcr.io/mikkerlo/torrent-browser-ext:master
 ```
 
-*   `-d`: Runs the container in detached mode.
-*   `-p 5000:5000`: Maps port 5000 on the host to port 5000 in the container.
-*   `-e VARIABLE_NAME="value"`: Sets an environment variable.
-*   `--name my-torrent-server`: Assigns a name to the running container.
-*   `torrent-server-bot`: The name of the image you built.
+*   Replace placeholders like `your_very_strong_and_unique_secret_key_here` with actual values.
+*   Note that the image name at the end is now `ghcr.io/mikkerlo/torrent-browser-ext:master`.
+
+### Building the Docker Image Locally (Development/Alternative)
+
+If you need to build the image locally (e.g., for development or if you can't access GHCR), you can still do so. The `Dockerfile` is located in the `server/` directory.
+
+1.  Navigate to the root directory of the project (`torrent-bot/`).
+2.  Run the build command:
+
+    ```shell
+    docker build -t your-custom-tag-name -f server/Dockerfile .
+    ```
+    *   `-t your-custom-tag-name`: Tags the image with a name of your choice.
+    *   `-f server/Dockerfile`: Specifies the path to the Dockerfile.
+    *   `.`: Sets the build context to the current directory.
+
+    If you build locally with a custom tag, you would then modify the `image` field in `docker-compose.yml` to `your-custom-tag-name` or use `your-custom-tag-name` in the `docker run` command if running standalone.
 
 ### Environment Variables to Set at Runtime
 
-The following environment variables **must** be set when running the container:
+Regardless of how you run the container (Docker Compose or standalone), the following environment variables **must** be set:
 
 *   `FLASK_SECRET_KEY`: **Required**. A strong, unique secret key for Flask session management.
 *   `QB_USER`: **Required**. Username for your qBittorrent Web UI.
