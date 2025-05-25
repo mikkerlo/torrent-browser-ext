@@ -46,70 +46,114 @@ To build the Docker image for the server:
 
 ## Running the Docker Container (Standalone)
 
-Once the image is built, you can run it as a standalone container:
+Once the image is built, you can run it as a standalone container. You will need to pass sensitive information as environment variables.
 
 ```shell
 docker run -d \
     -p 5000:5000 \
-    -e FLASK_SECRET_KEY="a_very_strong_and_unique_secret_key_here" \
-    -e APP_USERS="user1:yoursecurepassword1,user2:anotherpassword2" \
-    -e QB_URL="http://your_qbittorrent_host:port" \
+    -e FLASK_SECRET_KEY="your_very_strong_and_unique_secret_key_here" \
     -e QB_USER="your_qb_username" \
     -e QB_PASS="your_qb_password" \
-    -e QB_SAVE_PATH_BASE="/downloads/" \
+    -e APP_USERS="user1:yoursecurepassword1,user2:anotherpassword2" \
+    -e QB_URL="http://your_qbittorrent_host:port" \
     -e CORS_ORIGINS="http://localhost:3000,chrome-extension://your_extension_id_here" \
+    # Non-sensitive environment variables are set in the Dockerfile or have defaults
     --name my-torrent-server \
     torrent-server-bot
 ```
 
 *   `-d`: Runs the container in detached mode.
 *   `-p 5000:5000`: Maps port 5000 on the host to port 5000 in the container.
+*   `-e VARIABLE_NAME="value"`: Sets an environment variable.
 *   `--name my-torrent-server`: Assigns a name to the running container.
 *   `torrent-server-bot`: The name of the image you built.
 
-### Environment Variables
+### Environment Variables to Set at Runtime
 
-The following environment variables **must** or **should** be set when running the container:
+The following environment variables **must** be set when running the container:
 
 *   `FLASK_SECRET_KEY`: **Required**. A strong, unique secret key for Flask session management.
-*   `APP_USERS`: **Required**. A comma-separated string of `username:password` pairs for users who can log into this API (e.g., `"user1:pass1,user2:pass2"`).
-*   `QB_URL`: **Required**. The full URL of your qBittorrent Web UI (e.g., `http://192.168.1.100:8080`).
 *   `QB_USER`: **Required**. Username for your qBittorrent Web UI.
 *   `QB_PASS`: **Required**. Password for your qBittorrent Web UI.
-*   `QB_SAVE_PATH_BASE`: **Required**. The base directory *within your qBittorrent setup* where downloads should be saved (e.g., `/downloads/`). The server will append the username to this path (e.g. `/downloads/user1/`).
-*   `CORS_ORIGINS`: **Recommended**. A comma-separated list of origins to allow for CORS (e.g., `"http://localhost:8080,chrome-extension://your_extension_id"`). Defaults to `*` if not set, which is permissive.
-*   `GUNICORN_WORKERS` (Optional): Number of Gunicorn worker processes. Defaults to 1 in the image. You can add `-e GUNICORN_WORKERS=2` for example.
+*   `APP_USERS`: **Required**. A comma-separated string of `username:password` pairs for users who can log into this API (e.g., `"user1:pass1,user2:pass2"`).
 
-## Using Docker Compose
+The following environment variables have defaults in the `Dockerfile` or `docker-compose.yml` but can be overridden:
 
-For a more convenient way to manage the container and its configuration, a `docker-compose.yml` file is provided.
+*   `QB_URL`: Defaults to `http://localhost:8080/`. The full URL of your qBittorrent Web UI.
+*   `CORS_ORIGINS`: Defaults to `*`. A comma-separated list of origins to allow for CORS (e.g., `"http://localhost:8080,chrome-extension://your_extension_id"`).
+*   `FLASK_APP`: Defaults to `app:create_app`.
+*   `FLASK_RUN_HOST`: Defaults to `0.0.0.0`.
+*   `FLASK_RUN_PORT`: Defaults to `5000`.
+*   `GUNICORN_WORKERS` (Optional): Number of Gunicorn worker processes. If not set, Gunicorn's default will be used.
 
-1.  **Create a `.env` file** in the project root (`torrent-bot/`) to store your environment variables. **Do not commit this file to Git if it contains sensitive credentials.** Add `.env` to your `.gitignore` file (it's already there in the provided one).
+## Using Docker Compose (Recommended)
 
-    Example `.env` file content:
-    ```env
-    FLASK_SECRET_KEY=a_very_strong_and_unique_secret_key_for_compose
-    APP_USERS=user1:somepass,commonuser:anotherpass
-    QB_URL=http://localhost:8080 # Replace with your qBittorrent URL
-    QB_USER=qb_admin
-    QB_PASS=qb_admin_password
-    QB_SAVE_PATH_BASE=/data/torrents/ # Path qBittorrent uses for saving
-    CORS_ORIGINS=http://localhost:3000,chrome-extension://your_extension_id
+For a more convenient way to manage the container and its configuration, a `docker-compose.yml` file is provided in the project root.
 
-    # Optional Gunicorn workers
-    # GUNICORN_WORKERS=2
-    ```
+1.  **Configure Environment Variables:**
+    The `docker-compose.yml` file is set up to use environment variables for configuration. You have two main options:
+
+    *   **Option A: Edit `docker-compose.yml` directly (for testing or if not checking in sensitive data):**
+        You can uncomment and set the variables directly in the `environment` section of the `server` service in `docker-compose.yml`.
+
+        ```yaml
+        # c:\Users\mikkerlo\Documents\torrent-bot\docker-compose.yml
+        services:
+          server:
+            # ...
+            environment:
+              FLASK_SECRET_KEY: "your_very_strong_and_unique_secret_key"
+              QB_USER: "your_qb_username"
+              QB_PASS: "your_qb_password"
+              APP_USERS: "user1:pass1,user2:pass2"
+              QB_URL: "http://localhost:8080/" # Or your qBittorrent instance URL
+              CORS_ORIGINS: "*"
+              FLASK_APP: "app:create_app"
+              FLASK_RUN_HOST: "0.0.0.0"
+              FLASK_RUN_PORT: "5000"
+            # ...
+        ```
+
+    *   **Option B: Use a `.env` file (Recommended for security):**
+        Create a file named `.env` in the `server` directory (`c:\Users\mikkerlo\Documents\torrent-bot\server\.env`).
+        **Add `server/.env` to your `.gitignore` file to prevent committing secrets.**
+
+        Example `server/.env` file content:
+        ```env
+        FLASK_SECRET_KEY='your_very_strong_and_unique_secret_key_for_compose'
+        APP_USERS='user1:somepass,commonuser:anotherpass'
+        QB_URL='http://localhost:8080' # Replace with your qBittorrent URL
+        QB_USER='qb_admin'
+        QB_PASS='qb_admin_password'
+        # CORS_ORIGINS='http://localhost:3000,chrome-extension://your_extension_id' # Optional, defaults to *
+        # QB_SAVE_PATH_BASE is not used by the server directly anymore but was part of old config
+        ```
+        Then, uncomment the `env_file` section in your `docker-compose.yml`:
+        ```yaml
+        # c:\Users\mikkerlo\Documents\torrent-bot\docker-compose.yml
+        services:
+          server:
+            # ...
+            # To use an environment file, uncomment the line below
+            env_file:
+              - ./server/.env  # Create this file in the server directory to store your secrets
+            # ...
+        ```
 
 2.  **Run Docker Compose:**
-    Navigate to the project root (`torrent-bot/`) and run:
+    Navigate to the project root (`c:\Users\mikkerlo\Documents\torrent-bot\`) and run:
     ```shell
     docker-compose up -d
     ```
-    This will build the image (if not already built or if changes are detected) and start the `torrent-server` service defined in `docker-compose.yml`.
+    This will build the image (if not already built or if changes are detected) and start the `server` service.
 
 3.  **To stop the service:**
     ```shell
     docker-compose down
+    ```
+    To stop and remove volumes (if any were defined, though not in this setup):
+    ```shell
+    docker-compose down -v
     ```
 
 ## API Endpoints

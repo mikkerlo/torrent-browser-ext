@@ -22,15 +22,13 @@ ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_RUN_PORT=5000
 
 # qBittorrent connection details (override these with your actual values)
+# QB_URL, QB_USER, and QB_PASS should be set at runtime.
 ENV QB_URL="http://localhost:8080/"
-ENV QB_USER="admin"
-ENV QB_PASS="adminadmin"
 
-# Flask Secret Key (CHANGE THIS IN YOUR ENVIRONMENT)
-ENV FLASK_SECRET_KEY="your_default_very_secret_key_here_CHANGE_ME"
+# Flask Secret Key should be set at runtime, not in the Dockerfile.
 
 # Application users (username:password,comma-separated)
-ENV APP_USERS=""
+# APP_USERS should be set at runtime.
 
 # CORS Origins (comma-separated list of allowed origins for browser extension)
 ENV CORS_ORIGINS="*"

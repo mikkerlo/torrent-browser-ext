@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      # Define sensitive variables here or use an .env file
+      # For example, uncomment and set these:
+      # FLASK_SECRET_KEY: "your_very_strong_and_unique_secret_key"
+      # QB_USER: "your_qb_username"
+      # QB_PASS: "your_qb_password"
+      # APP_USERS: "user1:pass1,user2:pass2"
+      # QB_URL: "http://localhost:8080/" # Or your qBittorrent instance URL
+      CORS_ORIGINS: "*" # Adjust as needed for security
+      FLASK_APP: "app:create_app"
+      FLASK_RUN_HOST: "0.0.0.0"
+      FLASK_RUN_PORT: "5000"
+    # To use an environment file, uncomment the line below
+    # env_file:
+    #   - ./server/.env  # Create this file in the server directory to store your secrets
