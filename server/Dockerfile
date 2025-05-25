@@ -25,7 +25,6 @@ ENV FLASK_RUN_PORT=5000
 ENV QB_URL="http://localhost:8080/"
 ENV QB_USER="admin"
 ENV QB_PASS="adminadmin"
-ENV QB_SAVE_PATH_BASE="/downloads/" # Default save path base for torrents
 
 # Flask Secret Key (CHANGE THIS IN YOUR ENVIRONMENT)
 ENV FLASK_SECRET_KEY="your_default_very_secret_key_here_CHANGE_ME"
