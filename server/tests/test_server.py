@@ -8,7 +8,6 @@ from unittest.mock import patch, MagicMock
 # If running pytest from INSIDE the 'server' directory:
 # 'app' module (app.py) is at the top level relative to test execution path.
 from app import create_app 
-# from app import users as global_users_dict_in_app_module # If needed
 
 @pytest.fixture
 def app(monkeypatch):
