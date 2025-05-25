@@ -2,6 +2,10 @@
 # Use an official Python runtime as a parent image
 FROM python:3.11-slim
 
+LABEL org.opencontainers.image.source=https://github.com/mikkerlo/torrent-browser-ext
+LABEL org.opencontainers.image.description="Server for torrent browser extension"
+LABEL org.opencontainers.image.licenses=MIT
+
 # Set the working directory in the container
 WORKDIR /app
 
