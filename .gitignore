@@ -26,3 +26,4 @@ Thumbs.db
 
 # Other specific files if any (e.g., local logs)
 *.log
+packages/*

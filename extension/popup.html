@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css"/>
+</head>
+<body>
+  <div id="message-area" style="color: red; margin-bottom: 10px;"></div>
+  <div id="login-container">
+    <h2>Login</h2>
+    <form id="login-form">
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <div>
+        <input type="checkbox" id="save-password" name="save-password">
+        <label for="save-password">Save password</label>
+      </div>
+      <button type="submit">Login</button>
+    </form>
+  </div>
+  <div id="success-view" style="display:none; text-align: left; padding: 0 10px;"> 
+    <h1 style="text-align: center;">Welcome, <span id="display-username"></span>!</h1>
+    <p style="text-align: center;">You are logged in.</p>
+    
+    <div style="margin-top: 15px; margin-bottom: 10px;">
+      <input type="checkbox" id="magnet-links-enabled" name="magnet-links-enabled">
+      <label for="magnet-links-enabled">Enable Magnet Link Handling</label>
+    </div>
+
+    <div style="margin-top: 10px; margin-bottom: 10px;">
+      <input type="checkbox" id="torrent-files-enabled" name="torrent-files-enabled">
+      <label for="torrent-files-enabled">Handle .torrent File Downloads</label>
+    </div>
+
+    <div style="margin-top: 10px; margin-bottom: 20px; padding-left: 20px;"> 
+      <input type="checkbox" id="remove-torrent-after-upload" name="remove-torrent-after-upload">
+      <label for="remove-torrent-after-upload">Remove .torrent After Upload</label>
+    </div>
+
+    <button id="logout-button" style="display: block; width: 100%;">Logout</button>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
