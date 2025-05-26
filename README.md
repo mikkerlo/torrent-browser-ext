@@ -30,6 +30,99 @@ torrent-bot/
 └── ... (other git files, conftest.py)
 ```
 
+## Browser Extension
+
+This project also includes a browser extension designed to work with the Torrent Server Bot API. The extension allows users to easily send magnet links or .torrent files to their qBittorrent client via the server.
+
+### Extension Features
+
+*   **Login/Logout:** Authenticates with the Torrent Server Bot.
+*   **Magnet Link Handling:** Intercepts clicks on magnet links and sends them to the server.
+*   **.torrent File Handling:** Automatically detects downloads of .torrent files and uploads them to the server.
+*   **User Preferences:** Allows enabling/disabling magnet link and .torrent file handling, and an option to remove .torrent files after successful upload.
+*   **Notifications:** Provides on-page and browser notifications for actions.
+*   **Cross-browser Compatibility:** Supports both Firefox and Google Chrome.
+
+### Extension Structure
+
+The extension source files are located in the `extension/` directory:
+
+```
+extension/
+├── background.js                 # Service worker / background script for core logic
+├── content.js                    # Injects into web pages to handle magnet links
+├── icons/
+│   ├── logo.png                  # Extension icon
+│   └── logo.svg                  # Extension icon (source)
+├── lib/
+│   └── browser-polyfill.js       # Polyfill for browser.* APIs (for Chrome compatibility)
+├── manifest_chrome.json          # Manifest file for Google Chrome
+├── manifest_firefox.json         # Manifest file for Firefox
+├── popup.css                     # Styles for the popup UI
+├── popup.html                    # HTML structure for the popup UI
+├── popup.js                      # JavaScript logic for the popup UI
+```
+
+### Building the Extension
+
+The extension needs to be packaged into a ZIP file for installation in browsers. A shell script `pack_extension.sh` is provided for this purpose.
+
+**Prerequisites:**
+
+*   A Unix-like environment with `bash`, `zip`, `sed`, `grep`. (For Windows, use WSL or Git Bash).
+
+**Build Steps:**
+
+1.  **Navigate to the project root directory** (`torrent-bot/`).
+2.  **Make the script executable** (if not already):
+    ```shell
+    chmod +x pack_extension.sh
+    ```
+3.  **Run the script:**
+    The script requires your server's URL as the first argument. The second argument, the browser type, is optional.
+
+    *   **To build for a specific browser (e.g., Chrome):**
+        ```shell
+        ./pack_extension.sh https://your-server-url.com chrome
+        ```
+        Replace `https://your-server-url.com` with the actual URL where your Torrent Server Bot is accessible.
+
+    *   **To build for Firefox:**
+        ```shell
+        ./pack_extension.sh https://your-server-url.com firefox
+        ```
+
+    *   **To build for both Firefox and Chrome:**
+        ```shell
+        ./pack_extension.sh https://your-server-url.com
+        ```
+
+4.  **Output:**
+    The packaged extension(s) will be placed in the `packages/` directory (e.g., `packages/torrent_bot_extension_v1.0_chrome.zip`). The version number is extracted from the manifest file.
+
+    The `__SERVER_URL_PLACEHOLDER__` in `popup.js` and `background.js` will be replaced with the server URL you provide during the build.
+
+### Installing the Extension
+
+After building the extension, you can install it in your browser.
+
+**For Firefox:**
+
+1.  Open Firefox and navigate to `about:addons`.
+2.  Click the gear icon on the right side of "Manage Your Extensions".
+3.  Select "Install Add-on From File...".
+4.  Browse to the `packages/` directory in your project and select the Firefox ZIP file (e.g., `torrent_bot_extension_vX.Y_firefox.zip`).
+5.  Follow the prompts to install.
+
+**For Google Chrome:**
+
+1.  Open Chrome and navigate to `chrome://extensions`.
+2.  Enable "Developer mode" using the toggle switch in the top right corner.
+3.  Click the "Load unpacked" button.
+4.  Navigate to your project directory and select the `extension/` folder from your **build directory** (e.g., `torrent-bot/build/` after running the pack script, specifically the contents that were prepared for Chrome *before* zipping). **Alternatively, and often easier for distribution, you can drag and drop the generated `.zip` file (e.g., `torrent_bot_extension_vX.Y_chrome.zip`) from the `packages/` directory directly onto the `chrome://extensions` page.** Chrome will ask if you want to add it.
+
+    *(Note: For Chrome, if loading unpacked, the `build/` directory content varies depending on which browser was built last by `pack_extension.sh`. It's generally more reliable for Chrome to use the packaged `.zip` file or to ensure the `build/` directory contains the Chrome-specific manifest when loading unpacked.)*
+
 ## Docker Image Information
 
 The application's Docker image is hosted on GitHub Container Registry (GHCR).
