@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Auto-Torrent Bot",
   "version": "1.0",
-  "description": "A Firefox extension with a robust UI.",
+  "description": "A browser extension with a robust UI.",
   "permissions": [
     "storage",
     "downloads",
@@ -13,10 +13,7 @@
     "https://*/*"
   ],
   "background": {
-    "service_worker": "background.js",
-    "scripts": [
-      "background.js"
-    ]
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
@@ -24,6 +21,7 @@
         "<all_urls>"
       ],
       "js": [
+        "lib/browser-polyfill.js",
         "content.js"
       ],
       "run_at": "document_idle"
@@ -47,11 +45,5 @@
   },
   "icons": {
     "48": "icons/logo.png"
-  },
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "torrent-bot@mikkerlo.dev",
-      "strict_min_version": "108.0"
-    }
   }
 }

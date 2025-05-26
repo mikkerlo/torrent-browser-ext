@@ -1,3 +1,19 @@
+// background.js
+// IMPORTANT: importScripts() must be called at the top level, before any other complex logic.
+try {
+  // Path is relative to the root of the extension in the build directory.
+  importScripts('lib/browser-polyfill.js'); 
+} catch (e) {
+  console.error('CRITICAL: Failed to import browser-polyfill.js. Extension will likely not work in Chrome.', e);
+  // To prevent further 'browser is not defined' errors and to make it clear the polyfill failed:
+  if (typeof browser === 'undefined') {
+    // This is NOT a full polyfill, just a stub to potentially reduce console noise of 'browser is undefined'.
+    // Functionality WILL BE BROKEN.
+    globalThis.browser = globalThis.chrome || {}; 
+    console.error("Polyfill failed to load. A minimal 'browser' object has been stubbed using 'chrome' or empty object.");
+  }
+}
+
 const SERVER_URL_PLACEHOLDER = '__SERVER_URL_PLACEHOLDER__'; // Build script will replace this
 
 // --- Notification Helper ---
