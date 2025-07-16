@@ -1,0 +1,32 @@
+name: Build Extension Packages
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - 'extension/**'
+
+jobs:
+  build-and-package-extension:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Make pack_extension.sh executable
+        run: chmod +x pack_extension.sh
+
+      - name: Run packaging script
+        run: ./pack_extension.sh
+
+      - name: Upload Firefox Extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: firefox-extension
+          path: packages/torrent_bot_extension_v*_firefox.zip
+
+      - name: Upload Chrome Extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-extension
+          path: packages/torrent_bot_extension_v*_chrome.zip
