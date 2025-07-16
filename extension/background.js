@@ -14,8 +14,6 @@ try {
   }
 }
 
-const SERVER_URL_PLACEHOLDER = '__SERVER_URL_PLACEHOLDER__'; // Build script will replace this
-
 // --- Notification Helper ---
 async function showSystemNotification(title, message, success = true) {
   try {
@@ -58,13 +56,13 @@ async function forceLogout() {
 async function attemptReLogin() {
   if (typeof browser === 'undefined' || !browser.storage) return false; // Guard clause
   // console.log('Background: Attempting re-login...');
-  const creds = await browser.storage.local.get(['savedUsername', 'savedPassword']);
-  if (!creds.savedUsername || !creds.savedPassword) {
+  const creds = await browser.storage.local.get(['savedUsername', 'savedPassword', 'serverUrl']);
+  if (!creds.savedUsername || !creds.savedPassword || !creds.serverUrl) {
     await forceLogout();
     return false;
   }
   try {
-    const response = await fetch(`${SERVER_URL_PLACEHOLDER}/login`, {
+    const response = await fetch(`${creds.serverUrl}/login`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, mode: 'cors',
       credentials: 'include', body: JSON.stringify({ username: creds.savedUsername, password: creds.savedPassword })
     });
@@ -104,14 +102,15 @@ if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.onMessa
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'MAGNET_LINK_CLICKED' && message.href) {
       const magnetName = decodeURIComponent(message.href.match(/dn=([^&]*)/)?.[1] || 'Unknown Torrent').replace(/\+/g, ' ');
-      browser.storage.local.get(['isLoggedIn', 'loggedInUsername', 'magnetLinksEnabled'])
+      browser.storage.local.get(['isLoggedIn', 'loggedInUsername', 'magnetLinksEnabled', 'serverUrl'])
         .then(async storageData => {
-          if (storageData.isLoggedIn && storageData.loggedInUsername && storageData.magnetLinksEnabled) {
+          if (storageData.isLoggedIn && storageData.loggedInUsername && storageData.magnetLinksEnabled && storageData.serverUrl) {
             const payload = { magnet_link: message.href, target_user: storageData.loggedInUsername };
             const fetchOptions = { method: 'POST', headers: { 'Content-Type': 'application/json' }, mode: 'cors', credentials: 'include', body: JSON.stringify(payload) };
-            return fetchWithAuthRetry(`${SERVER_URL_PLACEHOLDER}/add_magnet_link`, fetchOptions);
+            return fetchWithAuthRetry(`${storageData.serverUrl}/add_magnet_link`, fetchOptions);
           } else {
             let reason = (!storageData.isLoggedIn) ? 'User not logged in.' : 'Magnet link handling not enabled.';
+            if (!storageData.serverUrl) reason = 'Server URL not set.';
             return Promise.reject({ isLogicError: true, reason: reason });
           }
         })
@@ -149,11 +148,12 @@ if (typeof browser !== 'undefined' && browser.downloads && browser.downloads.onC
         if (!filenameForNotification.toLowerCase().endsWith('.torrent')) return;
 
         const prefs = await browser.storage.local.get([
-          'isLoggedIn', 'loggedInUsername', 'torrentFilesEnabled', 'removeTorrentAfterUpload'
+          'isLoggedIn', 'loggedInUsername', 'torrentFilesEnabled', 'removeTorrentAfterUpload', 'serverUrl'
         ]);
 
         if (!prefs.isLoggedIn || !prefs.loggedInUsername) return;
         if (!prefs.torrentFilesEnabled) return;
+        if (!prefs.serverUrl) return;
         
         const fileResponse = await fetch(downloadItem.url);
         if (!fileResponse.ok) throw new Error(`Failed to fetch .torrent file blob: ${fileResponse.statusText}`);
@@ -163,7 +163,7 @@ if (typeof browser !== 'undefined' && browser.downloads && browser.downloads.onC
         formData.append('target_user', prefs.loggedInUsername);
 
         const fetchOptions = { method: 'POST', mode: 'cors', credentials: 'include', body: formData };
-        const serverResponse = await fetchWithAuthRetry(`${SERVER_URL_PLACEHOLDER}/add_torrent_file`, fetchOptions);
+        const serverResponse = await fetchWithAuthRetry(`${prefs.serverUrl}/add_torrent_file`, fetchOptions);
         const serverResponseData = await serverResponse.json();
 
         if (!serverResponse.ok) {

@@ -79,28 +79,13 @@ The extension needs to be packaged into a ZIP file for installation in browsers.
     chmod +x pack_extension.sh
     ```
 3.  **Run the script:**
-    The script requires your server's URL as the first argument. The second argument, the browser type, is optional.
-
-    *   **To build for a specific browser (e.g., Chrome):**
-        ```shell
-        ./pack_extension.sh https://your-server-url.com chrome
-        ```
-        Replace `https://your-server-url.com` with the actual URL where your Torrent Server Bot is accessible.
-
-    *   **To build for Firefox:**
-        ```shell
-        ./pack_extension.sh https://your-server-url.com firefox
-        ```
-
-    *   **To build for both Firefox and Chrome:**
-        ```shell
-        ./pack_extension.sh https://your-server-url.com
-        ```
+    ```shell
+    ./pack_extension.sh
+    ```
+    The script will automatically build packages for both Firefox and Chrome.
 
 4.  **Output:**
-    The packaged extension(s) will be placed in the `packages/` directory (e.g., `packages/torrent_bot_extension_v1.0_chrome.zip`). The version number is extracted from the manifest file.
-
-    The `__SERVER_URL_PLACEHOLDER__` in `popup.js` and `background.js` will be replaced with the server URL you provide during the build.
+    The packaged extensions will be placed in the `packages/` directory (e.g., `packages/torrent_bot_extension_v1.1_chrome.zip`). The version number is extracted from the corresponding manifest file during the build process.
 
 ### Installing the Extension
 

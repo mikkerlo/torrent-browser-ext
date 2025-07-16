@@ -8,12 +8,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const successView = document.getElementById('success-view');
   const displayUsername = document.getElementById('display-username');
   const logoutButton = document.getElementById('logout-button');
+  const serverUrlInput = document.getElementById('server-url');
   
   const magnetLinksEnabledCheckbox = document.getElementById('magnet-links-enabled');
   const torrentFilesEnabledCheckbox = document.getElementById('torrent-files-enabled');
   const removeTorrentAfterUploadCheckbox = document.getElementById('remove-torrent-after-upload');
-
-  const SERVER_URL_PLACEHOLDER = '__SERVER_URL_PLACEHOLDER__'; // Build script will replace this
 
   function showMessage(message, isError = false) {
     messageArea.textContent = message;
@@ -22,7 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function populateLoginFormFromStorage() {
     try {
-      const result = await browser.storage.local.get(['savedUsername', 'savedPassword']);
+      const result = await browser.storage.local.get(['savedUsername', 'savedPassword', 'serverUrl']);
+      serverUrlInput.value = result.serverUrl || '';
       usernameInput.value = result.savedUsername || '';
       passwordInput.value = result.savedPassword || '';
       savePasswordCheckbox.checked = !!result.savedPassword;
@@ -78,11 +78,18 @@ document.addEventListener('DOMContentLoaded', function() {
     messageArea.textContent = '';
     const currentUsername = usernameInput.value;
     const currentPassword = passwordInput.value;
+    const currentServerUrl = serverUrlInput.value.trim();
+    if (!currentServerUrl.startsWith("https://")) {
+      showMessage("Server URL should start with https://", true);
+      return;
+    }
+
+    browser.storage.local.set({ serverUrl: currentServerUrl });
 
     if (savePasswordCheckbox.checked) browser.storage.local.set({ savedUsername: currentUsername, savedPassword: currentPassword });
     else browser.storage.local.remove(['savedUsername', 'savedPassword']);
 
-    fetch(`${SERVER_URL_PLACEHOLDER}/login`, {
+    fetch(`${currentServerUrl}/login`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, mode: 'cors',
       body: JSON.stringify({ username: currentUsername, password: currentPassword }), credentials: 'include'
     })
@@ -91,8 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
       return response.json();
     })
     .then(data => browser.storage.local.set({
-        isLoggedIn: true, loggedInUsername: currentUsername, 
-        magnetLinksEnabled: false, torrentFilesEnabled: false, removeTorrentAfterUpload: false 
+        isLoggedIn: true, loggedInUsername: currentUsername,
+        magnetLinksEnabled: false, torrentFilesEnabled: false, removeTorrentAfterUpload: false
     }))
     .then(() => showSuccessView(currentUsername))
     .catch(errorMsg => showMessage(typeof errorMsg === 'string' ? errorMsg : 'Login error.', true));
@@ -100,9 +107,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
   logoutButton.addEventListener('click', function() {
     messageArea.textContent = '';
-    fetch(`${SERVER_URL_PLACEHOLDER}/logout`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, mode: 'cors', credentials: 'include'
-    }).catch(err => { /* console.warn('Server logout request failed.', err); */ }); 
+    browser.storage.local.get('serverUrl').then(result => {
+      if (result.serverUrl) {
+        fetch(`${result.serverUrl}/logout`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, mode: 'cors', credentials: 'include'
+        }).catch(err => { /* console.warn('Server logout request failed.', err); */ });
+      }
+    });
 
     browser.runtime.sendMessage({ type: 'USER_LOGOUT_REQUESTED' })
       .then(async response => {

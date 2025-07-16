@@ -11,13 +11,6 @@ SOURCE_DIR="./extension" # Relative to the script's location (root)
 BUILD_DIR="./build"
 PACKAGE_DIR="./packages"
 
-# Files to replace placeholder in
-FILES_TO_REPLACE_PLACEHOLDER=(
-  "background.js"
-  "popup.js"
-)
-PLACEHOLDER="__SERVER_URL_PLACEHOLDER__"
-
 # --- Helper Functions ---
 echo_green() {
   echo -e "\033[0;32m$1\033[0m"
@@ -31,33 +24,7 @@ echo_yellow() {
 
 # --- Script Start ---
 
-# Check for host argument
-if [ -z "$1" ]; then
-  echo_red "Error: No server host provided."
-  echo "Usage: ./pack_extension.sh <your_server_url> [browser]"
-  echo "  [browser] can be 'firefox', 'chrome', or omitted (to build both)."
-  echo "  Example (specific): ./pack_extension.sh https://yourserver.com firefox"
-  echo "  Example (both):   ./pack_extension.sh https://yourserver.com"
-  exit 1
-fi
-
-SERVER_URL=$1
-INPUT_BROWSER=$2
-
-BROWSERS_TO_BUILD=()
-
-if [ -z "$INPUT_BROWSER" ]; then
-  echo_green "No browser specified, building for both Firefox and Chrome."
-  BROWSERS_TO_BUILD=("firefox" "chrome")
-elif [ "$INPUT_BROWSER" == "firefox" ] || [ "$INPUT_BROWSER" == "chrome" ]; then
-  echo_green "Targeting Browser: $INPUT_BROWSER"
-  BROWSERS_TO_BUILD=("$INPUT_BROWSER")
-else
-  echo_red "Error: Invalid browser specified. Must be 'firefox', 'chrome', or omitted."
-  exit 1
-fi
-
-echo_green "Using Server URL: $SERVER_URL"
+BROWSERS_TO_BUILD=("firefox" "chrome")
 
 # 0. Clean up old build and package directories
 echo_yellow "Cleaning up old directories..."
@@ -93,17 +60,7 @@ package_for_browser() {
     return 1 # Indicate failure
   fi
 
-  # 2. Replace placeholder with the actual server URL in the build directory files
-  echo_yellow "Replacing server URL placeholder for $BROWSER_TYPE..."
-  for FILE_BASENAME in "${FILES_TO_REPLACE_PLACEHOLDER[@]}"; do
-    local FILE_PATH="$BUILD_DIR/$FILE_BASENAME"
-    if [ -f "$FILE_PATH" ]; then
-      # echo "Updating $FILE_PATH for $BROWSER_TYPE..." # Can be verbose
-      sed "s|$PLACEHOLDER|$SERVER_URL|g" "$FILE_PATH" > "${FILE_PATH}.tmp" && mv "${FILE_PATH}.tmp" "$FILE_PATH"
-    else
-      echo_red "Warning: File $FILE_PATH not found for placeholder replacement (Browser: $BROWSER_TYPE)."
-    fi
-  done
+
 
   # 3. Create ZIP package for the current browser
   local VERSION_LINE=$(grep '"version"' "$MANIFEST_FILE_PATH_BUILD" | head -n 1)
@@ -143,7 +100,6 @@ for CURRENT_BROWSER_TO_BUILD in "${BROWSERS_TO_BUILD[@]}"; do
   fi
 done
 
-# 4. Clean up build directory (optional, uncomment to keep for debugging)
 echo_yellow "\nCleaning up final build directory..."
 rm -rf "$BUILD_DIR"
 
